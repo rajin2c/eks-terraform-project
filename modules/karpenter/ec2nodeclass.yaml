@@ -1,0 +1,20 @@
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default
+spec:
+  # Amazon Linux 2023 — latest patch
+  amiSelectorTerms:
+    - alias: al2023@latest
+  # IAM role for Karpenter-provisioned nodes
+  role: "${cluster_name}-karpenter-node"
+  # Discover subnets tagged with karpenter.sh/discovery
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${cluster_name}"
+  # Discover security groups tagged with karpenter.sh/discovery
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${cluster_name}"
+  tags:
+    karpenter.sh/discovery: "${cluster_name}"

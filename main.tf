@@ -133,3 +133,74 @@ module "eks" {
 
   tags = local.tags
 }
+
+# ─────────────────────────────────────────
+# Karpenter v1.9.0
+# Uses EKS module built-in karpenter sub-module
+# ─────────────────────────────────────────
+module "karpenter" {
+  source  = "terraform-aws-modules/eks/aws//modules/karpenter"
+  version = "21.19.0"
+
+  cluster_name = module.eks.cluster_name
+
+  # Pod Identity association for the Karpenter controller
+  create_pod_identity_association = true
+
+  # IAM role for nodes that Karpenter provisions
+  node_iam_role_use_name_prefix = false
+  node_iam_role_name            = "${var.cluster_name}-karpenter-node"
+
+  tags = local.tags
+}
+
+# Karpenter Helm chart — installs the controller
+resource "helm_release" "karpenter" {
+  name             = "karpenter"
+  namespace        = "kube-system"
+  repository       = "oci://public.ecr.aws/karpenter"
+  chart            = "karpenter"
+  version          = "1.9.0"
+  create_namespace = false
+  wait             = true
+  wait_for_jobs    = true
+
+  values = [
+    <<-EOT
+    settings:
+      clusterName: ${module.eks.cluster_name}
+      interruptionQueue: ${module.karpenter.queue_name}
+    controller:
+      resources:
+        requests:
+          cpu: 1
+          memory: 1Gi
+        limits:
+          cpu: 1
+          memory: 1Gi
+    EOT
+  ]
+
+  depends_on = [
+    module.eks,
+    module.karpenter
+  ]
+}
+
+# Apply EC2NodeClass
+resource "kubectl_manifest" "karpenter_ec2nodeclass" {
+  yaml_body = templatefile("${path.module}/modules/karpenter/ec2nodeclass.yaml", {
+    cluster_name = var.cluster_name
+  })
+
+  depends_on = [helm_release.karpenter]
+}
+
+# Apply NodePool
+resource "kubectl_manifest" "karpenter_nodepool" {
+  yaml_body = templatefile("${path.module}/modules/karpenter/nodepool.yaml", {
+    cluster_name = var.cluster_name
+  })
+
+  depends_on = [kubectl_manifest.karpenter_ec2nodeclass]
+}
