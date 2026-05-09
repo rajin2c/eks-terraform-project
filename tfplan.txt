@@ -1,0 +1,2702 @@
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+ <= read (data resources)
+
+Terraform will perform the following actions:
+
+  # helm_release.karpenter will be created
+  + resource "helm_release" "karpenter" {
+      + atomic                     = false
+      + chart                      = "karpenter"
+      + cleanup_on_fail            = false
+      + create_namespace           = false
+      + dependency_update          = false
+      + disable_crd_hooks          = false
+      + disable_openapi_validation = false
+      + disable_webhooks           = false
+      + force_update               = false
+      + id                         = (known after apply)
+      + lint                       = false
+      + manifest                   = (known after apply)
+      + max_history                = 0
+      + metadata                   = (known after apply)
+      + name                       = "karpenter"
+      + namespace                  = "kube-system"
+      + pass_credentials           = false
+      + recreate_pods              = false
+      + render_subchart_notes      = true
+      + replace                    = false
+      + repository                 = "oci://public.ecr.aws/karpenter"
+      + reset_values               = false
+      + reuse_values               = false
+      + skip_crds                  = false
+      + status                     = "deployed"
+      + timeout                    = 300
+      + values                     = [
+          + <<-EOT
+                settings:
+                  clusterName: rajin-eks-cluster
+                  interruptionQueue: Karpenter-rajin-eks-cluster
+                controller:
+                  resources:
+                    requests:
+                      cpu: 1
+                      memory: 1Gi
+                    limits:
+                      cpu: 1
+                      memory: 1Gi
+            EOT,
+        ]
+      + verify                     = false
+      + version                    = "1.9.0"
+      + wait                       = true
+      + wait_for_jobs              = true
+    }
+
+  # kubectl_manifest.karpenter_ec2nodeclass will be created
+  + resource "kubectl_manifest" "karpenter_ec2nodeclass" {
+      + api_version             = "karpenter.k8s.aws/v1"
+      + apply_only              = false
+      + field_manager           = "kubectl"
+      + force_conflicts         = false
+      + force_new               = false
+      + id                      = (known after apply)
+      + kind                    = "EC2NodeClass"
+      + live_manifest_incluster = (sensitive value)
+      + live_uid                = (known after apply)
+      + name                    = "default"
+      + namespace               = (known after apply)
+      + server_side_apply       = false
+      + uid                     = (known after apply)
+      + upgrade_api_version     = false
+      + validate_schema         = true
+      + wait_for_rollout        = true
+      + yaml_body               = (sensitive value)
+      + yaml_body_parsed        = <<-EOT
+            apiVersion: karpenter.k8s.aws/v1
+            kind: EC2NodeClass
+            metadata:
+              name: default
+            spec:
+              amiSelectorTerms:
+              - alias: al2023@latest
+              role: rajin-eks-cluster-karpenter-node
+              securityGroupSelectorTerms:
+              - tags:
+                  karpenter.sh/discovery: rajin-eks-cluster
+              subnetSelectorTerms:
+              - tags:
+                  karpenter.sh/discovery: rajin-eks-cluster
+              tags:
+                karpenter.sh/discovery: rajin-eks-cluster
+        EOT
+      + yaml_incluster          = (sensitive value)
+    }
+
+  # kubectl_manifest.karpenter_nodepool will be created
+  + resource "kubectl_manifest" "karpenter_nodepool" {
+      + api_version             = "karpenter.sh/v1"
+      + apply_only              = false
+      + field_manager           = "kubectl"
+      + force_conflicts         = false
+      + force_new               = false
+      + id                      = (known after apply)
+      + kind                    = "NodePool"
+      + live_manifest_incluster = (sensitive value)
+      + live_uid                = (known after apply)
+      + name                    = "default"
+      + namespace               = (known after apply)
+      + server_side_apply       = false
+      + uid                     = (known after apply)
+      + upgrade_api_version     = false
+      + validate_schema         = true
+      + wait_for_rollout        = true
+      + yaml_body               = (sensitive value)
+      + yaml_body_parsed        = <<-EOT
+            apiVersion: karpenter.sh/v1
+            kind: NodePool
+            metadata:
+              name: default
+            spec:
+              disruption:
+                consolidateAfter: 30s
+                consolidationPolicy: WhenEmptyOrUnderutilized
+              limits:
+                cpu: 4
+                memory: 8Gi
+              template:
+                spec:
+                  nodeClassRef:
+                    group: karpenter.k8s.aws
+                    kind: EC2NodeClass
+                    name: default
+                  requirements:
+                  - key: karpenter.sh/capacity-type
+                    operator: In
+                    values:
+                    - spot
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                    - amd64
+                  - key: node.kubernetes.io/instance-type
+                    operator: In
+                    values:
+                    - t3.small
+                    - t3.medium
+        EOT
+      + yaml_incluster          = (sensitive value)
+    }
+
+  # module.eks.data.aws_eks_addon_version.this["coredns"] will be read during apply
+  # (depends on a resource or a module with changes pending)
+ <= data "aws_eks_addon_version" "this" {
+      + addon_name         = "coredns"
+      + id                 = (known after apply)
+      + kubernetes_version = "1.34"
+      + most_recent        = true
+      + region             = (known after apply)
+      + version            = (known after apply)
+    }
+
+  # module.eks.data.aws_eks_addon_version.this["eks-pod-identity-agent"] will be read during apply
+  # (depends on a resource or a module with changes pending)
+ <= data "aws_eks_addon_version" "this" {
+      + addon_name         = "eks-pod-identity-agent"
+      + id                 = (known after apply)
+      + kubernetes_version = "1.34"
+      + most_recent        = true
+      + region             = (known after apply)
+      + version            = (known after apply)
+    }
+
+  # module.eks.data.aws_eks_addon_version.this["kube-proxy"] will be read during apply
+  # (depends on a resource or a module with changes pending)
+ <= data "aws_eks_addon_version" "this" {
+      + addon_name         = "kube-proxy"
+      + id                 = (known after apply)
+      + kubernetes_version = "1.34"
+      + most_recent        = true
+      + region             = (known after apply)
+      + version            = (known after apply)
+    }
+
+  # module.eks.data.aws_eks_addon_version.this["vpc-cni"] will be read during apply
+  # (depends on a resource or a module with changes pending)
+ <= data "aws_eks_addon_version" "this" {
+      + addon_name         = "vpc-cni"
+      + id                 = (known after apply)
+      + kubernetes_version = "1.34"
+      + most_recent        = true
+      + region             = (known after apply)
+      + version            = (known after apply)
+    }
+
+  # module.eks.data.tls_certificate.this[0] will be read during apply
+  # (config refers to values not yet known)
+ <= data "tls_certificate" "this" {
+      + certificates = (known after apply)
+      + id           = (known after apply)
+      + url          = (known after apply)
+    }
+
+  # module.eks.aws_cloudwatch_log_group.this[0] will be created
+  + resource "aws_cloudwatch_log_group" "this" {
+      + arn                         = (known after apply)
+      + deletion_protection_enabled = (known after apply)
+      + id                          = (known after apply)
+      + log_group_class             = (known after apply)
+      + name                        = "/aws/eks/rajin-eks-cluster/cluster"
+      + name_prefix                 = (known after apply)
+      + region                      = "us-east-1"
+      + retention_in_days           = 90
+      + skip_destroy                = false
+      + tags                        = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "/aws/eks/rajin-eks-cluster/cluster"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all                    = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "/aws/eks/rajin-eks-cluster/cluster"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+    }
+
+  # module.eks.aws_ec2_tag.cluster_primary_security_group["Environment"] will be created
+  + resource "aws_ec2_tag" "cluster_primary_security_group" {
+      + id          = (known after apply)
+      + key         = "Environment"
+      + region      = "us-east-1"
+      + resource_id = (known after apply)
+      + value       = "dev"
+    }
+
+  # module.eks.aws_ec2_tag.cluster_primary_security_group["ManagedBy"] will be created
+  + resource "aws_ec2_tag" "cluster_primary_security_group" {
+      + id          = (known after apply)
+      + key         = "ManagedBy"
+      + region      = "us-east-1"
+      + resource_id = (known after apply)
+      + value       = "terraform"
+    }
+
+  # module.eks.aws_ec2_tag.cluster_primary_security_group["Owner"] will be created
+  + resource "aws_ec2_tag" "cluster_primary_security_group" {
+      + id          = (known after apply)
+      + key         = "Owner"
+      + region      = "us-east-1"
+      + resource_id = (known after apply)
+      + value       = "rajin"
+    }
+
+  # module.eks.aws_ec2_tag.cluster_primary_security_group["Project"] will be created
+  + resource "aws_ec2_tag" "cluster_primary_security_group" {
+      + id          = (known after apply)
+      + key         = "Project"
+      + region      = "us-east-1"
+      + resource_id = (known after apply)
+      + value       = "eks-terraform"
+    }
+
+  # module.eks.aws_eks_access_entry.this["cluster_creator"] will be created
+  + resource "aws_eks_access_entry" "this" {
+      + access_entry_arn  = (known after apply)
+      + cluster_name      = (known after apply)
+      + created_at        = (known after apply)
+      + id                = (known after apply)
+      + kubernetes_groups = (known after apply)
+      + modified_at       = (known after apply)
+      + principal_arn     = "arn:aws:iam::733533334364:root"
+      + region            = "us-east-1"
+      + tags              = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all          = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + type              = "STANDARD"
+      + user_name         = (known after apply)
+    }
+
+  # module.eks.aws_eks_access_policy_association.this["cluster_creator_admin"] will be created
+  + resource "aws_eks_access_policy_association" "this" {
+      + associated_at = (known after apply)
+      + cluster_name  = (known after apply)
+      + id            = (known after apply)
+      + modified_at   = (known after apply)
+      + policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+      + principal_arn = "arn:aws:iam::733533334364:root"
+      + region        = "us-east-1"
+
+      + access_scope {
+          + type = "cluster"
+        }
+    }
+
+  # module.eks.aws_eks_addon.before_compute["eks-pod-identity-agent"] will be created
+  + resource "aws_eks_addon" "before_compute" {
+      + addon_name                  = "eks-pod-identity-agent"
+      + addon_version               = (known after apply)
+      + arn                         = (known after apply)
+      + cluster_name                = (known after apply)
+      + configuration_values        = (known after apply)
+      + created_at                  = (known after apply)
+      + id                          = (known after apply)
+      + modified_at                 = (known after apply)
+      + preserve                    = true
+      + region                      = "us-east-1"
+      + resolve_conflicts_on_create = "NONE"
+      + resolve_conflicts_on_update = "OVERWRITE"
+      + tags                        = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all                    = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+
+      + namespace_config (known after apply)
+
+      + timeouts {}
+    }
+
+  # module.eks.aws_eks_addon.before_compute["vpc-cni"] will be created
+  + resource "aws_eks_addon" "before_compute" {
+      + addon_name                  = "vpc-cni"
+      + addon_version               = (known after apply)
+      + arn                         = (known after apply)
+      + cluster_name                = (known after apply)
+      + configuration_values        = (known after apply)
+      + created_at                  = (known after apply)
+      + id                          = (known after apply)
+      + modified_at                 = (known after apply)
+      + preserve                    = true
+      + region                      = "us-east-1"
+      + resolve_conflicts_on_create = "NONE"
+      + resolve_conflicts_on_update = "OVERWRITE"
+      + tags                        = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all                    = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+
+      + namespace_config (known after apply)
+
+      + timeouts {}
+    }
+
+  # module.eks.aws_eks_addon.this["coredns"] will be created
+  + resource "aws_eks_addon" "this" {
+      + addon_name                  = "coredns"
+      + addon_version               = (known after apply)
+      + arn                         = (known after apply)
+      + cluster_name                = (known after apply)
+      + configuration_values        = (known after apply)
+      + created_at                  = (known after apply)
+      + id                          = (known after apply)
+      + modified_at                 = (known after apply)
+      + preserve                    = true
+      + region                      = "us-east-1"
+      + resolve_conflicts_on_create = "NONE"
+      + resolve_conflicts_on_update = "OVERWRITE"
+      + tags                        = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all                    = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+
+      + namespace_config (known after apply)
+
+      + timeouts {}
+    }
+
+  # module.eks.aws_eks_addon.this["kube-proxy"] will be created
+  + resource "aws_eks_addon" "this" {
+      + addon_name                  = "kube-proxy"
+      + addon_version               = (known after apply)
+      + arn                         = (known after apply)
+      + cluster_name                = (known after apply)
+      + configuration_values        = (known after apply)
+      + created_at                  = (known after apply)
+      + id                          = (known after apply)
+      + modified_at                 = (known after apply)
+      + preserve                    = true
+      + region                      = "us-east-1"
+      + resolve_conflicts_on_create = "NONE"
+      + resolve_conflicts_on_update = "OVERWRITE"
+      + tags                        = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all                    = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+
+      + namespace_config (known after apply)
+
+      + timeouts {}
+    }
+
+  # module.eks.aws_eks_cluster.this[0] will be created
+  + resource "aws_eks_cluster" "this" {
+      + arn                           = (known after apply)
+      + bootstrap_self_managed_addons = false
+      + certificate_authority         = (known after apply)
+      + cluster_id                    = (known after apply)
+      + created_at                    = (known after apply)
+      + deletion_protection           = (known after apply)
+      + enabled_cluster_log_types     = [
+          + "api",
+          + "audit",
+          + "authenticator",
+        ]
+      + endpoint                      = (known after apply)
+      + id                            = (known after apply)
+      + identity                      = (known after apply)
+      + name                          = "rajin-eks-cluster"
+      + platform_version              = (known after apply)
+      + region                        = "us-east-1"
+      + role_arn                      = (known after apply)
+      + status                        = (known after apply)
+      + tags                          = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all                      = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + version                       = "1.34"
+
+      + access_config {
+          + authentication_mode                         = "API_AND_CONFIG_MAP"
+          + bootstrap_cluster_creator_admin_permissions = false
+        }
+
+      + compute_config (known after apply)
+
+      + control_plane_scaling_config (known after apply)
+
+      + encryption_config {
+          + resources = [
+              + "secrets",
+            ]
+
+          + provider {
+              + key_arn = (known after apply)
+            }
+        }
+
+      + kubernetes_network_config {
+          + ip_family         = "ipv4"
+          + service_ipv4_cidr = (known after apply)
+          + service_ipv6_cidr = (known after apply)
+
+          + elastic_load_balancing (known after apply)
+        }
+
+      + storage_config (known after apply)
+
+      + upgrade_policy (known after apply)
+
+      + vpc_config {
+          + cluster_security_group_id = (known after apply)
+          + endpoint_private_access   = true
+          + endpoint_public_access    = true
+          + public_access_cidrs       = [
+              + "0.0.0.0/0",
+            ]
+          + security_group_ids        = (known after apply)
+          + subnet_ids                = (known after apply)
+          + vpc_id                    = (known after apply)
+        }
+    }
+
+  # module.eks.aws_iam_openid_connect_provider.oidc_provider[0] will be created
+  + resource "aws_iam_openid_connect_provider" "oidc_provider" {
+      + arn             = (known after apply)
+      + client_id_list  = [
+          + "sts.amazonaws.com",
+        ]
+      + id              = (known after apply)
+      + tags            = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-eks-irsa"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all        = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-eks-irsa"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + thumbprint_list = (known after apply)
+      + url             = (known after apply)
+    }
+
+  # module.eks.aws_iam_policy.cluster_encryption[0] will be created
+  + resource "aws_iam_policy" "cluster_encryption" {
+      + arn              = (known after apply)
+      + attachment_count = (known after apply)
+      + description      = "Cluster encryption policy to allow cluster role to utilize CMK provided"
+      + id               = (known after apply)
+      + name             = (known after apply)
+      + name_prefix      = "rajin-eks-cluster-cluster-ClusterEncryption"
+      + path             = "/"
+      + policy           = (known after apply)
+      + policy_id        = (known after apply)
+      + tags             = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all         = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+    }
+
+  # module.eks.aws_iam_role.this[0] will be created
+  + resource "aws_iam_role" "this" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = [
+                          + "sts:TagSession",
+                          + "sts:AssumeRole",
+                        ]
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "eks.amazonaws.com"
+                        }
+                      + Sid       = "EKSClusterAssumeRole"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = true
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = (known after apply)
+      + name_prefix           = "rajin-eks-cluster-cluster-"
+      + path                  = "/"
+      + tags                  = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all              = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.eks.aws_iam_role_policy_attachment.cluster_encryption[0] will be created
+  + resource "aws_iam_role_policy_attachment" "cluster_encryption" {
+      + id         = (known after apply)
+      + policy_arn = (known after apply)
+      + role       = (known after apply)
+    }
+
+  # module.eks.aws_iam_role_policy_attachment.this["AmazonEKSClusterPolicy"] will be created
+  + resource "aws_iam_role_policy_attachment" "this" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+      + role       = (known after apply)
+    }
+
+  # module.eks.aws_security_group.cluster[0] will be created
+  + resource "aws_security_group" "cluster" {
+      + arn                    = (known after apply)
+      + description            = "EKS cluster security group"
+      + egress                 = (known after apply)
+      + id                     = (known after apply)
+      + ingress                = (known after apply)
+      + name                   = (known after apply)
+      + name_prefix            = "rajin-eks-cluster-cluster-"
+      + owner_id               = (known after apply)
+      + region                 = "us-east-1"
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-cluster"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all               = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-cluster"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # module.eks.aws_security_group.node[0] will be created
+  + resource "aws_security_group" "node" {
+      + arn                    = (known after apply)
+      + description            = "EKS node shared security group"
+      + egress                 = (known after apply)
+      + id                     = (known after apply)
+      + ingress                = (known after apply)
+      + name                   = (known after apply)
+      + name_prefix            = "rajin-eks-cluster-node-"
+      + owner_id               = (known after apply)
+      + region                 = "us-east-1"
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Environment"                             = "dev"
+          + "ManagedBy"                               = "terraform"
+          + "Name"                                    = "rajin-eks-cluster-node"
+          + "Owner"                                   = "rajin"
+          + "Project"                                 = "eks-terraform"
+          + "karpenter.sh/discovery"                  = "rajin-eks-cluster"
+          + "kubernetes.io/cluster/rajin-eks-cluster" = "owned"
+        }
+      + tags_all               = {
+          + "Environment"                             = "dev"
+          + "ManagedBy"                               = "terraform"
+          + "Name"                                    = "rajin-eks-cluster-node"
+          + "Owner"                                   = "rajin"
+          + "Project"                                 = "eks-terraform"
+          + "karpenter.sh/discovery"                  = "rajin-eks-cluster"
+          + "kubernetes.io/cluster/rajin-eks-cluster" = "owned"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # module.eks.aws_security_group_rule.cluster["ingress_nodes_443"] will be created
+  + resource "aws_security_group_rule" "cluster" {
+      + description              = "Node groups to cluster API"
+      + from_port                = 443
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + region                   = "us-east-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 443
+      + type                     = "ingress"
+    }
+
+  # module.eks.aws_security_group_rule.node["egress_all"] will be created
+  + resource "aws_security_group_rule" "node" {
+      + cidr_blocks              = [
+          + "0.0.0.0/0",
+        ]
+      + description              = "Allow all egress"
+      + from_port                = 0
+      + id                       = (known after apply)
+      + protocol                 = "-1"
+      + region                   = "us-east-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 0
+      + type                     = "egress"
+    }
+
+  # module.eks.aws_security_group_rule.node["ingress_cluster_10251_webhook"] will be created
+  + resource "aws_security_group_rule" "node" {
+      + description              = "Cluster API to node 10251/tcp webhook"
+      + from_port                = 10251
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + region                   = "us-east-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 10251
+      + type                     = "ingress"
+    }
+
+  # module.eks.aws_security_group_rule.node["ingress_cluster_443"] will be created
+  + resource "aws_security_group_rule" "node" {
+      + description              = "Cluster API to node groups"
+      + from_port                = 443
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + region                   = "us-east-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 443
+      + type                     = "ingress"
+    }
+
+  # module.eks.aws_security_group_rule.node["ingress_cluster_4443_webhook"] will be created
+  + resource "aws_security_group_rule" "node" {
+      + description              = "Cluster API to node 4443/tcp webhook"
+      + from_port                = 4443
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + region                   = "us-east-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 4443
+      + type                     = "ingress"
+    }
+
+  # module.eks.aws_security_group_rule.node["ingress_cluster_6443_webhook"] will be created
+  + resource "aws_security_group_rule" "node" {
+      + description              = "Cluster API to node 6443/tcp webhook"
+      + from_port                = 6443
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + region                   = "us-east-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 6443
+      + type                     = "ingress"
+    }
+
+  # module.eks.aws_security_group_rule.node["ingress_cluster_8443_webhook"] will be created
+  + resource "aws_security_group_rule" "node" {
+      + description              = "Cluster API to node 8443/tcp webhook"
+      + from_port                = 8443
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + region                   = "us-east-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 8443
+      + type                     = "ingress"
+    }
+
+  # module.eks.aws_security_group_rule.node["ingress_cluster_9443_webhook"] will be created
+  + resource "aws_security_group_rule" "node" {
+      + description              = "Cluster API to node 9443/tcp webhook"
+      + from_port                = 9443
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + region                   = "us-east-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 9443
+      + type                     = "ingress"
+    }
+
+  # module.eks.aws_security_group_rule.node["ingress_cluster_kubelet"] will be created
+  + resource "aws_security_group_rule" "node" {
+      + description              = "Cluster API to node kubelets"
+      + from_port                = 10250
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + region                   = "us-east-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 10250
+      + type                     = "ingress"
+    }
+
+  # module.eks.aws_security_group_rule.node["ingress_nodes_ephemeral"] will be created
+  + resource "aws_security_group_rule" "node" {
+      + description              = "Node to node ingress on ephemeral ports"
+      + from_port                = 1025
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + region                   = "us-east-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = true
+      + source_security_group_id = (known after apply)
+      + to_port                  = 65535
+      + type                     = "ingress"
+    }
+
+  # module.eks.aws_security_group_rule.node["ingress_self_coredns_tcp"] will be created
+  + resource "aws_security_group_rule" "node" {
+      + description              = "Node to node CoreDNS"
+      + from_port                = 53
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + region                   = "us-east-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = true
+      + source_security_group_id = (known after apply)
+      + to_port                  = 53
+      + type                     = "ingress"
+    }
+
+  # module.eks.aws_security_group_rule.node["ingress_self_coredns_udp"] will be created
+  + resource "aws_security_group_rule" "node" {
+      + description              = "Node to node CoreDNS UDP"
+      + from_port                = 53
+      + id                       = (known after apply)
+      + protocol                 = "udp"
+      + region                   = "us-east-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = true
+      + source_security_group_id = (known after apply)
+      + to_port                  = 53
+      + type                     = "ingress"
+    }
+
+  # module.eks.time_sleep.this[0] will be created
+  + resource "time_sleep" "this" {
+      + create_duration = "30s"
+      + id              = (known after apply)
+      + triggers        = {
+          + "certificate_authority_data" = (known after apply)
+          + "endpoint"                   = (known after apply)
+          + "kubernetes_version"         = "1.34"
+          + "name"                       = (known after apply)
+          + "service_cidr"               = (known after apply)
+        }
+    }
+
+  # module.karpenter.data.aws_iam_policy_document.controller[0] will be read during apply
+  # (config refers to values not yet known)
+ <= data "aws_iam_policy_document" "controller" {
+      + id            = (known after apply)
+      + json          = (known after apply)
+      + minified_json = (known after apply)
+
+      + statement {
+          + actions   = [
+              + "ec2:CreateFleet",
+              + "ec2:RunInstances",
+            ]
+          + resources = [
+              + "arn:aws:ec2:us-east-1:*:capacity-reservation/*",
+              + "arn:aws:ec2:us-east-1:*:placement-group/*",
+              + "arn:aws:ec2:us-east-1:*:security-group/*",
+              + "arn:aws:ec2:us-east-1:*:subnet/*",
+              + "arn:aws:ec2:us-east-1::image/*",
+              + "arn:aws:ec2:us-east-1::snapshot/*",
+            ]
+          + sid       = "AllowScopedEC2InstanceAccessActions"
+        }
+      + statement {
+          + actions   = [
+              + "ec2:CreateFleet",
+              + "ec2:RunInstances",
+            ]
+          + resources = [
+              + "arn:aws:ec2:us-east-1:*:launch-template/*",
+            ]
+          + sid       = "AllowScopedEC2LaunchTemplateAccessActions"
+
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "owned",
+                ]
+              + variable = "aws:ResourceTag/kubernetes.io/cluster/rajin-eks-cluster"
+            }
+          + condition {
+              + test     = "StringLike"
+              + values   = [
+                  + "*",
+                ]
+              + variable = "aws:ResourceTag/karpenter.sh/nodepool"
+            }
+        }
+      + statement {
+          + actions   = [
+              + "ec2:CreateFleet",
+              + "ec2:CreateLaunchTemplate",
+              + "ec2:RunInstances",
+            ]
+          + resources = [
+              + "arn:aws:ec2:us-east-1:*:capacity-reservation/*",
+              + "arn:aws:ec2:us-east-1:*:fleet/*",
+              + "arn:aws:ec2:us-east-1:*:instance/*",
+              + "arn:aws:ec2:us-east-1:*:launch-template/*",
+              + "arn:aws:ec2:us-east-1:*:network-interface/*",
+              + "arn:aws:ec2:us-east-1:*:spot-instances-request/*",
+              + "arn:aws:ec2:us-east-1:*:volume/*",
+            ]
+          + sid       = "AllowScopedEC2InstanceActionsWithTags"
+
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "owned",
+                ]
+              + variable = "aws:RequestTag/kubernetes.io/cluster/rajin-eks-cluster"
+            }
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "rajin-eks-cluster",
+                ]
+              + variable = "aws:RequestTag/eks:eks-cluster-name"
+            }
+          + condition {
+              + test     = "StringLike"
+              + values   = [
+                  + "*",
+                ]
+              + variable = "aws:RequestTag/karpenter.sh/nodepool"
+            }
+        }
+      + statement {
+          + actions   = [
+              + "ec2:CreateTags",
+            ]
+          + resources = [
+              + "arn:aws:ec2:us-east-1:*:fleet/*",
+              + "arn:aws:ec2:us-east-1:*:instance/*",
+              + "arn:aws:ec2:us-east-1:*:launch-template/*",
+              + "arn:aws:ec2:us-east-1:*:network-interface/*",
+              + "arn:aws:ec2:us-east-1:*:spot-instances-request/*",
+              + "arn:aws:ec2:us-east-1:*:volume/*",
+            ]
+          + sid       = "AllowScopedResourceCreationTagging"
+
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "RunInstances",
+                  + "CreateFleet",
+                  + "CreateLaunchTemplate",
+                ]
+              + variable = "ec2:CreateAction"
+            }
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "owned",
+                ]
+              + variable = "aws:RequestTag/kubernetes.io/cluster/rajin-eks-cluster"
+            }
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "rajin-eks-cluster",
+                ]
+              + variable = "aws:RequestTag/eks:eks-cluster-name"
+            }
+          + condition {
+              + test     = "StringLike"
+              + values   = [
+                  + "*",
+                ]
+              + variable = "aws:RequestTag/karpenter.sh/nodepool"
+            }
+        }
+      + statement {
+          + actions   = [
+              + "ec2:CreateTags",
+            ]
+          + resources = [
+              + "arn:aws:ec2:us-east-1:*:instance/*",
+            ]
+          + sid       = "AllowScopedResourceTagging"
+
+          + condition {
+              + test     = "ForAllValues:StringEquals"
+              + values   = [
+                  + "eks:eks-cluster-name",
+                  + "karpenter.sh/nodeclaim",
+                  + "Name",
+                ]
+              + variable = "aws:TagKeys"
+            }
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "owned",
+                ]
+              + variable = "aws:ResourceTag/kubernetes.io/cluster/rajin-eks-cluster"
+            }
+          + condition {
+              + test     = "StringEqualsIfExists"
+              + values   = [
+                  + "rajin-eks-cluster",
+                ]
+              + variable = "aws:RequestTag/eks:eks-cluster-name"
+            }
+          + condition {
+              + test     = "StringLike"
+              + values   = [
+                  + "*",
+                ]
+              + variable = "aws:ResourceTag/karpenter.sh/nodepool"
+            }
+        }
+      + statement {
+          + actions   = [
+              + "ec2:DeleteLaunchTemplate",
+              + "ec2:TerminateInstances",
+            ]
+          + resources = [
+              + "arn:aws:ec2:us-east-1:*:instance/*",
+              + "arn:aws:ec2:us-east-1:*:launch-template/*",
+            ]
+          + sid       = "AllowScopedDeletion"
+
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "owned",
+                ]
+              + variable = "aws:ResourceTag/kubernetes.io/cluster/rajin-eks-cluster"
+            }
+          + condition {
+              + test     = "StringLike"
+              + values   = [
+                  + "*",
+                ]
+              + variable = "aws:ResourceTag/karpenter.sh/nodepool"
+            }
+        }
+      + statement {
+          + actions   = [
+              + "ec2:DescribeAvailabilityZones",
+              + "ec2:DescribeCapacityReservations",
+              + "ec2:DescribeImages",
+              + "ec2:DescribeInstanceStatus",
+              + "ec2:DescribeInstanceTypeOfferings",
+              + "ec2:DescribeInstanceTypes",
+              + "ec2:DescribeInstances",
+              + "ec2:DescribeLaunchTemplates",
+              + "ec2:DescribePlacementGroups",
+              + "ec2:DescribeSecurityGroups",
+              + "ec2:DescribeSpotPriceHistory",
+              + "ec2:DescribeSubnets",
+            ]
+          + resources = [
+              + "*",
+            ]
+          + sid       = "AllowRegionalReadActions"
+
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "us-east-1",
+                ]
+              + variable = "aws:RequestedRegion"
+            }
+        }
+      + statement {
+          + actions   = [
+              + "ssm:GetParameter",
+            ]
+          + resources = [
+              + "arn:aws:ssm:us-east-1::parameter/aws/service/*",
+            ]
+          + sid       = "AllowSSMReadActions"
+        }
+      + statement {
+          + actions   = [
+              + "pricing:GetProducts",
+            ]
+          + resources = [
+              + "*",
+            ]
+          + sid       = "AllowPricingReadActions"
+        }
+      + statement {
+          + actions   = [
+              + "arc-zonal-shift:GetManagedResource",
+            ]
+          + resources = [
+              + "arn:aws:eks:us-east-1:733533334364:cluster/rajin-eks-cluster",
+            ]
+          + sid       = "AllowZonalShiftReadActions"
+        }
+      + statement {
+          + actions   = [
+              + "sqs:DeleteMessage",
+              + "sqs:GetQueueUrl",
+              + "sqs:ReceiveMessage",
+            ]
+          + resources = [
+              + (known after apply),
+            ]
+          + sid       = "AllowInterruptionQueueActions"
+        }
+      + statement {
+          + actions   = [
+              + "iam:PassRole",
+            ]
+          + resources = [
+              + (known after apply),
+            ]
+          + sid       = "AllowPassingInstanceRole"
+
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "ec2.amazonaws.com",
+                ]
+              + variable = "iam:PassedToService"
+            }
+        }
+      + statement {
+          + actions   = [
+              + "iam:CreateInstanceProfile",
+            ]
+          + resources = [
+              + "arn:aws:iam::733533334364:instance-profile/*",
+            ]
+          + sid       = "AllowScopedInstanceProfileCreationActions"
+
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "owned",
+                ]
+              + variable = "aws:RequestTag/kubernetes.io/cluster/rajin-eks-cluster"
+            }
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "rajin-eks-cluster",
+                ]
+              + variable = "aws:RequestTag/eks:eks-cluster-name"
+            }
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "us-east-1",
+                ]
+              + variable = "aws:RequestTag/topology.kubernetes.io/region"
+            }
+          + condition {
+              + test     = "StringLike"
+              + values   = [
+                  + "*",
+                ]
+              + variable = "aws:RequestTag/karpenter.k8s.aws/ec2nodeclass"
+            }
+        }
+      + statement {
+          + actions   = [
+              + "iam:TagInstanceProfile",
+            ]
+          + resources = [
+              + "arn:aws:iam::733533334364:instance-profile/*",
+            ]
+          + sid       = "AllowScopedInstanceProfileTagActions"
+
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "owned",
+                ]
+              + variable = "aws:RequestTag/kubernetes.io/cluster/rajin-eks-cluster"
+            }
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "owned",
+                ]
+              + variable = "aws:ResourceTag/kubernetes.io/cluster/rajin-eks-cluster"
+            }
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "rajin-eks-cluster",
+                ]
+              + variable = "aws:RequestTag/eks:eks-cluster-name"
+            }
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "us-east-1",
+                ]
+              + variable = "aws:RequestTag/topology.kubernetes.io/region"
+            }
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "us-east-1",
+                ]
+              + variable = "aws:ResourceTag/topology.kubernetes.io/region"
+            }
+          + condition {
+              + test     = "StringLike"
+              + values   = [
+                  + "*",
+                ]
+              + variable = "aws:RequestTag/karpenter.k8s.aws/ec2nodeclass"
+            }
+          + condition {
+              + test     = "StringLike"
+              + values   = [
+                  + "*",
+                ]
+              + variable = "aws:ResourceTag/karpenter.k8s.aws/ec2nodeclass"
+            }
+        }
+      + statement {
+          + actions   = [
+              + "iam:AddRoleToInstanceProfile",
+              + "iam:DeleteInstanceProfile",
+              + "iam:RemoveRoleFromInstanceProfile",
+            ]
+          + resources = [
+              + "arn:aws:iam::733533334364:instance-profile/*",
+            ]
+          + sid       = "AllowScopedInstanceProfileActions"
+
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "owned",
+                ]
+              + variable = "aws:ResourceTag/kubernetes.io/cluster/rajin-eks-cluster"
+            }
+          + condition {
+              + test     = "StringEquals"
+              + values   = [
+                  + "us-east-1",
+                ]
+              + variable = "aws:ResourceTag/topology.kubernetes.io/region"
+            }
+          + condition {
+              + test     = "StringLike"
+              + values   = [
+                  + "*",
+                ]
+              + variable = "aws:ResourceTag/karpenter.k8s.aws/ec2nodeclass"
+            }
+        }
+      + statement {
+          + actions   = [
+              + "iam:GetInstanceProfile",
+            ]
+          + resources = [
+              + "arn:aws:iam::733533334364:instance-profile/*",
+            ]
+          + sid       = "AllowInstanceProfileReadActions"
+        }
+      + statement {
+          + actions   = [
+              + "iam:ListInstanceProfiles",
+            ]
+          + resources = [
+              + "*",
+            ]
+          + sid       = "AllowUnscopedInstanceProfileListAction"
+        }
+      + statement {
+          + actions   = [
+              + "eks:DescribeCluster",
+            ]
+          + resources = [
+              + "arn:aws:eks:us-east-1:733533334364:cluster/rajin-eks-cluster",
+            ]
+          + sid       = "AllowAPIServerEndpointDiscovery"
+        }
+    }
+
+  # module.karpenter.data.aws_iam_policy_document.queue[0] will be read during apply
+  # (config refers to values not yet known)
+ <= data "aws_iam_policy_document" "queue" {
+      + id            = (known after apply)
+      + json          = (known after apply)
+      + minified_json = (known after apply)
+
+      + statement {
+          + actions   = [
+              + "sqs:SendMessage",
+            ]
+          + resources = [
+              + (known after apply),
+            ]
+          + sid       = "SqsWrite"
+
+          + principals {
+              + identifiers = [
+                  + "events.amazonaws.com",
+                  + "sqs.amazonaws.com",
+                ]
+              + type        = "Service"
+            }
+        }
+      + statement {
+          + actions   = [
+              + "sqs:*",
+            ]
+          + effect    = "Deny"
+          + resources = [
+              + (known after apply),
+            ]
+          + sid       = "DenyHTTP"
+
+          + condition {
+              + test     = "Bool"
+              + values   = [
+                  + "false",
+                ]
+              + variable = "aws:SecureTransport"
+            }
+
+          + principals {
+              + identifiers = [
+                  + "*",
+                ]
+              + type        = "*"
+            }
+        }
+    }
+
+  # module.karpenter.aws_cloudwatch_event_rule.this["capacity_reservation_interruption"] will be created
+  + resource "aws_cloudwatch_event_rule" "this" {
+      + arn            = (known after apply)
+      + description    = "Karpenter interrupt - EC2 capacity reservation instance interruption warning"
+      + event_bus_name = "default"
+      + event_pattern  = jsonencode(
+            {
+              + detail-type = [
+                  + "EC2 Capacity Reservation Instance Interruption Warning",
+                ]
+              + source      = [
+                  + "aws.ec2",
+                ]
+            }
+        )
+      + force_destroy  = false
+      + id             = (known after apply)
+      + name           = (known after apply)
+      + name_prefix    = "KarpenterCRInterruption-"
+      + region         = "us-east-1"
+      + tags           = {
+          + "ClusterName" = "rajin-eks-cluster"
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all       = {
+          + "ClusterName" = "rajin-eks-cluster"
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+    }
+
+  # module.karpenter.aws_cloudwatch_event_rule.this["health_event"] will be created
+  + resource "aws_cloudwatch_event_rule" "this" {
+      + arn            = (known after apply)
+      + description    = "Karpenter interrupt - AWS health event"
+      + event_bus_name = "default"
+      + event_pattern  = jsonencode(
+            {
+              + detail-type = [
+                  + "AWS Health Event",
+                ]
+              + source      = [
+                  + "aws.health",
+                ]
+            }
+        )
+      + force_destroy  = false
+      + id             = (known after apply)
+      + name           = (known after apply)
+      + name_prefix    = "KarpenterHealthEvent-"
+      + region         = "us-east-1"
+      + tags           = {
+          + "ClusterName" = "rajin-eks-cluster"
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all       = {
+          + "ClusterName" = "rajin-eks-cluster"
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+    }
+
+  # module.karpenter.aws_cloudwatch_event_rule.this["instance_rebalance"] will be created
+  + resource "aws_cloudwatch_event_rule" "this" {
+      + arn            = (known after apply)
+      + description    = "Karpenter interrupt - EC2 instance rebalance recommendation"
+      + event_bus_name = "default"
+      + event_pattern  = jsonencode(
+            {
+              + detail-type = [
+                  + "EC2 Instance Rebalance Recommendation",
+                ]
+              + source      = [
+                  + "aws.ec2",
+                ]
+            }
+        )
+      + force_destroy  = false
+      + id             = (known after apply)
+      + name           = (known after apply)
+      + name_prefix    = "KarpenterInstanceRebalance-"
+      + region         = "us-east-1"
+      + tags           = {
+          + "ClusterName" = "rajin-eks-cluster"
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all       = {
+          + "ClusterName" = "rajin-eks-cluster"
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+    }
+
+  # module.karpenter.aws_cloudwatch_event_rule.this["instance_state_change"] will be created
+  + resource "aws_cloudwatch_event_rule" "this" {
+      + arn            = (known after apply)
+      + description    = "Karpenter interrupt - EC2 instance state-change notification"
+      + event_bus_name = "default"
+      + event_pattern  = jsonencode(
+            {
+              + detail-type = [
+                  + "EC2 Instance State-change Notification",
+                ]
+              + source      = [
+                  + "aws.ec2",
+                ]
+            }
+        )
+      + force_destroy  = false
+      + id             = (known after apply)
+      + name           = (known after apply)
+      + name_prefix    = "KarpenterInstanceStateChange-"
+      + region         = "us-east-1"
+      + tags           = {
+          + "ClusterName" = "rajin-eks-cluster"
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all       = {
+          + "ClusterName" = "rajin-eks-cluster"
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+    }
+
+  # module.karpenter.aws_cloudwatch_event_rule.this["spot_interrupt"] will be created
+  + resource "aws_cloudwatch_event_rule" "this" {
+      + arn            = (known after apply)
+      + description    = "Karpenter interrupt - EC2 spot instance interruption warning"
+      + event_bus_name = "default"
+      + event_pattern  = jsonencode(
+            {
+              + detail-type = [
+                  + "EC2 Spot Instance Interruption Warning",
+                ]
+              + source      = [
+                  + "aws.ec2",
+                ]
+            }
+        )
+      + force_destroy  = false
+      + id             = (known after apply)
+      + name           = (known after apply)
+      + name_prefix    = "KarpenterSpotInterrupt-"
+      + region         = "us-east-1"
+      + tags           = {
+          + "ClusterName" = "rajin-eks-cluster"
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all       = {
+          + "ClusterName" = "rajin-eks-cluster"
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+    }
+
+  # module.karpenter.aws_cloudwatch_event_target.this["capacity_reservation_interruption"] will be created
+  + resource "aws_cloudwatch_event_target" "this" {
+      + arn            = (known after apply)
+      + event_bus_name = "default"
+      + force_destroy  = false
+      + id             = (known after apply)
+      + region         = "us-east-1"
+      + rule           = (known after apply)
+      + target_id      = "KarpenterInterruptionQueueTarget"
+    }
+
+  # module.karpenter.aws_cloudwatch_event_target.this["health_event"] will be created
+  + resource "aws_cloudwatch_event_target" "this" {
+      + arn            = (known after apply)
+      + event_bus_name = "default"
+      + force_destroy  = false
+      + id             = (known after apply)
+      + region         = "us-east-1"
+      + rule           = (known after apply)
+      + target_id      = "KarpenterInterruptionQueueTarget"
+    }
+
+  # module.karpenter.aws_cloudwatch_event_target.this["instance_rebalance"] will be created
+  + resource "aws_cloudwatch_event_target" "this" {
+      + arn            = (known after apply)
+      + event_bus_name = "default"
+      + force_destroy  = false
+      + id             = (known after apply)
+      + region         = "us-east-1"
+      + rule           = (known after apply)
+      + target_id      = "KarpenterInterruptionQueueTarget"
+    }
+
+  # module.karpenter.aws_cloudwatch_event_target.this["instance_state_change"] will be created
+  + resource "aws_cloudwatch_event_target" "this" {
+      + arn            = (known after apply)
+      + event_bus_name = "default"
+      + force_destroy  = false
+      + id             = (known after apply)
+      + region         = "us-east-1"
+      + rule           = (known after apply)
+      + target_id      = "KarpenterInterruptionQueueTarget"
+    }
+
+  # module.karpenter.aws_cloudwatch_event_target.this["spot_interrupt"] will be created
+  + resource "aws_cloudwatch_event_target" "this" {
+      + arn            = (known after apply)
+      + event_bus_name = "default"
+      + force_destroy  = false
+      + id             = (known after apply)
+      + region         = "us-east-1"
+      + rule           = (known after apply)
+      + target_id      = "KarpenterInterruptionQueueTarget"
+    }
+
+  # module.karpenter.aws_eks_access_entry.node[0] will be created
+  + resource "aws_eks_access_entry" "node" {
+      + access_entry_arn  = (known after apply)
+      + cluster_name      = "rajin-eks-cluster"
+      + created_at        = (known after apply)
+      + id                = (known after apply)
+      + kubernetes_groups = (known after apply)
+      + modified_at       = (known after apply)
+      + principal_arn     = (known after apply)
+      + region            = "us-east-1"
+      + tags              = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all          = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + type              = "EC2_LINUX"
+      + user_name         = (known after apply)
+    }
+
+  # module.karpenter.aws_eks_pod_identity_association.karpenter[0] will be created
+  + resource "aws_eks_pod_identity_association" "karpenter" {
+      + association_arn      = (known after apply)
+      + association_id       = (known after apply)
+      + cluster_name         = "rajin-eks-cluster"
+      + disable_session_tags = false
+      + external_id          = (known after apply)
+      + id                   = (known after apply)
+      + namespace            = "kube-system"
+      + region               = "us-east-1"
+      + role_arn             = (known after apply)
+      + service_account      = "karpenter"
+      + tags                 = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all             = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+    }
+
+  # module.karpenter.aws_iam_policy.controller[0] will be created
+  + resource "aws_iam_policy" "controller" {
+      + arn              = (known after apply)
+      + attachment_count = (known after apply)
+      + description      = "Karpenter controller IAM policy"
+      + id               = (known after apply)
+      + name             = (known after apply)
+      + name_prefix      = "KarpenterController-"
+      + path             = "/"
+      + policy           = (known after apply)
+      + policy_id        = (known after apply)
+      + tags             = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all         = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+    }
+
+  # module.karpenter.aws_iam_role.controller[0] will be created
+  + resource "aws_iam_role" "controller" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = [
+                          + "sts:TagSession",
+                          + "sts:AssumeRole",
+                        ]
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "pods.eks.amazonaws.com"
+                        }
+                      + Sid       = "PodIdentity"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + description           = "Karpenter controller IAM role"
+      + force_detach_policies = true
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = (known after apply)
+      + name_prefix           = "KarpenterController-"
+      + path                  = "/"
+      + tags                  = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all              = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.karpenter.aws_iam_role.node[0] will be created
+  + resource "aws_iam_role" "node" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "ec2.amazonaws.com"
+                        }
+                      + Sid       = "EKSNodeAssumeRole"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = true
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "rajin-eks-cluster-karpenter-node"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags                  = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all              = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.karpenter.aws_iam_role_policy_attachment.controller[0] will be created
+  + resource "aws_iam_role_policy_attachment" "controller" {
+      + id         = (known after apply)
+      + policy_arn = (known after apply)
+      + role       = (known after apply)
+    }
+
+  # module.karpenter.aws_iam_role_policy_attachment.node["AmazonEC2ContainerRegistryPullOnly"] will be created
+  + resource "aws_iam_role_policy_attachment" "node" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
+      + role       = "rajin-eks-cluster-karpenter-node"
+    }
+
+  # module.karpenter.aws_iam_role_policy_attachment.node["AmazonEKSWorkerNodePolicy"] will be created
+  + resource "aws_iam_role_policy_attachment" "node" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+      + role       = "rajin-eks-cluster-karpenter-node"
+    }
+
+  # module.karpenter.aws_iam_role_policy_attachment.node["AmazonEKS_CNI_Policy"] will be created
+  + resource "aws_iam_role_policy_attachment" "node" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+      + role       = "rajin-eks-cluster-karpenter-node"
+    }
+
+  # module.karpenter.aws_sqs_queue.this[0] will be created
+  + resource "aws_sqs_queue" "this" {
+      + arn                               = (known after apply)
+      + content_based_deduplication       = false
+      + deduplication_scope               = (known after apply)
+      + delay_seconds                     = 0
+      + fifo_queue                        = false
+      + fifo_throughput_limit             = (known after apply)
+      + id                                = (known after apply)
+      + kms_data_key_reuse_period_seconds = 0
+      + max_message_size                  = 262144
+      + message_retention_seconds         = 300
+      + name                              = "Karpenter-rajin-eks-cluster"
+      + name_prefix                       = (known after apply)
+      + policy                            = (known after apply)
+      + receive_wait_time_seconds         = 0
+      + redrive_allow_policy              = (known after apply)
+      + redrive_policy                    = (known after apply)
+      + region                            = "us-east-1"
+      + sqs_managed_sse_enabled           = true
+      + tags                              = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all                          = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + url                               = (known after apply)
+      + visibility_timeout_seconds        = 30
+    }
+
+  # module.karpenter.aws_sqs_queue_policy.this[0] will be created
+  + resource "aws_sqs_queue_policy" "this" {
+      + id        = (known after apply)
+      + policy    = (known after apply)
+      + queue_url = (known after apply)
+      + region    = "us-east-1"
+    }
+
+  # module.vpc.aws_default_network_acl.this[0] will be created
+  + resource "aws_default_network_acl" "this" {
+      + arn                    = (known after apply)
+      + default_network_acl_id = (known after apply)
+      + id                     = (known after apply)
+      + owner_id               = (known after apply)
+      + region                 = "us-east-1"
+      + tags                   = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc-default"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all               = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc-default"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + vpc_id                 = (known after apply)
+
+      + egress {
+          + action          = "allow"
+          + from_port       = 0
+          + ipv6_cidr_block = "::/0"
+          + protocol        = "-1"
+          + rule_no         = 101
+          + to_port         = 0
+            # (1 unchanged attribute hidden)
+        }
+      + egress {
+          + action          = "allow"
+          + cidr_block      = "0.0.0.0/0"
+          + from_port       = 0
+          + protocol        = "-1"
+          + rule_no         = 100
+          + to_port         = 0
+            # (1 unchanged attribute hidden)
+        }
+
+      + ingress {
+          + action          = "allow"
+          + from_port       = 0
+          + ipv6_cidr_block = "::/0"
+          + protocol        = "-1"
+          + rule_no         = 101
+          + to_port         = 0
+            # (1 unchanged attribute hidden)
+        }
+      + ingress {
+          + action          = "allow"
+          + cidr_block      = "0.0.0.0/0"
+          + from_port       = 0
+          + protocol        = "-1"
+          + rule_no         = 100
+          + to_port         = 0
+            # (1 unchanged attribute hidden)
+        }
+    }
+
+  # module.vpc.aws_default_route_table.default[0] will be created
+  + resource "aws_default_route_table" "default" {
+      + arn                    = (known after apply)
+      + default_route_table_id = (known after apply)
+      + id                     = (known after apply)
+      + owner_id               = (known after apply)
+      + region                 = "us-east-1"
+      + route                  = (known after apply)
+      + tags                   = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc-default"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all               = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc-default"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + vpc_id                 = (known after apply)
+
+      + timeouts {
+          + create = "5m"
+          + update = "5m"
+        }
+    }
+
+  # module.vpc.aws_default_security_group.this[0] will be created
+  + resource "aws_default_security_group" "this" {
+      + arn                    = (known after apply)
+      + description            = (known after apply)
+      + egress                 = (known after apply)
+      + id                     = (known after apply)
+      + ingress                = (known after apply)
+      + name                   = (known after apply)
+      + name_prefix            = (known after apply)
+      + owner_id               = (known after apply)
+      + region                 = "us-east-1"
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc-default"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all               = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc-default"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # module.vpc.aws_eip.nat[0] will be created
+  + resource "aws_eip" "nat" {
+      + allocation_id        = (known after apply)
+      + arn                  = (known after apply)
+      + association_id       = (known after apply)
+      + carrier_ip           = (known after apply)
+      + customer_owned_ip    = (known after apply)
+      + domain               = "vpc"
+      + id                   = (known after apply)
+      + instance             = (known after apply)
+      + ipam_pool_id         = (known after apply)
+      + network_border_group = (known after apply)
+      + network_interface    = (known after apply)
+      + private_dns          = (known after apply)
+      + private_ip           = (known after apply)
+      + ptr_record           = (known after apply)
+      + public_dns           = (known after apply)
+      + public_ip            = (known after apply)
+      + public_ipv4_pool     = (known after apply)
+      + region               = "us-east-1"
+      + tags                 = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc-us-east-1a"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all             = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc-us-east-1a"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+    }
+
+  # module.vpc.aws_internet_gateway.this[0] will be created
+  + resource "aws_internet_gateway" "this" {
+      + arn      = (known after apply)
+      + id       = (known after apply)
+      + owner_id = (known after apply)
+      + region   = "us-east-1"
+      + tags     = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + vpc_id   = (known after apply)
+    }
+
+  # module.vpc.aws_nat_gateway.this[0] will be created
+  + resource "aws_nat_gateway" "this" {
+      + allocation_id                      = (known after apply)
+      + association_id                     = (known after apply)
+      + auto_provision_zones               = (known after apply)
+      + auto_scaling_ips                   = (known after apply)
+      + availability_mode                  = (known after apply)
+      + connectivity_type                  = "public"
+      + id                                 = (known after apply)
+      + network_interface_id               = (known after apply)
+      + private_ip                         = (known after apply)
+      + public_ip                          = (known after apply)
+      + region                             = "us-east-1"
+      + regional_nat_gateway_address       = (known after apply)
+      + regional_nat_gateway_auto_mode     = (known after apply)
+      + route_table_id                     = (known after apply)
+      + secondary_allocation_ids           = (known after apply)
+      + secondary_private_ip_address_count = (known after apply)
+      + secondary_private_ip_addresses     = (known after apply)
+      + subnet_id                          = (known after apply)
+      + tags                               = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc-us-east-1a"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all                           = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc-us-east-1a"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + vpc_id                             = (known after apply)
+    }
+
+  # module.vpc.aws_route.private_nat_gateway[0] will be created
+  + resource "aws_route" "private_nat_gateway" {
+      + destination_cidr_block = "0.0.0.0/0"
+      + id                     = (known after apply)
+      + instance_id            = (known after apply)
+      + instance_owner_id      = (known after apply)
+      + nat_gateway_id         = (known after apply)
+      + network_interface_id   = (known after apply)
+      + origin                 = (known after apply)
+      + region                 = "us-east-1"
+      + route_table_id         = (known after apply)
+      + state                  = (known after apply)
+
+      + timeouts {
+          + create = "5m"
+        }
+    }
+
+  # module.vpc.aws_route.public_internet_gateway[0] will be created
+  + resource "aws_route" "public_internet_gateway" {
+      + destination_cidr_block = "0.0.0.0/0"
+      + gateway_id             = (known after apply)
+      + id                     = (known after apply)
+      + instance_id            = (known after apply)
+      + instance_owner_id      = (known after apply)
+      + network_interface_id   = (known after apply)
+      + origin                 = (known after apply)
+      + region                 = "us-east-1"
+      + route_table_id         = (known after apply)
+      + state                  = (known after apply)
+
+      + timeouts {
+          + create = "5m"
+        }
+    }
+
+  # module.vpc.aws_route_table.private[0] will be created
+  + resource "aws_route_table" "private" {
+      + arn              = (known after apply)
+      + id               = (known after apply)
+      + owner_id         = (known after apply)
+      + propagating_vgws = (known after apply)
+      + region           = "us-east-1"
+      + route            = (known after apply)
+      + tags             = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc-private"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all         = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc-private"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + vpc_id           = (known after apply)
+    }
+
+  # module.vpc.aws_route_table.public[0] will be created
+  + resource "aws_route_table" "public" {
+      + arn              = (known after apply)
+      + id               = (known after apply)
+      + owner_id         = (known after apply)
+      + propagating_vgws = (known after apply)
+      + region           = "us-east-1"
+      + route            = (known after apply)
+      + tags             = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc-public"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all         = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc-public"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + vpc_id           = (known after apply)
+    }
+
+  # module.vpc.aws_route_table_association.private[0] will be created
+  + resource "aws_route_table_association" "private" {
+      + id             = (known after apply)
+      + region         = "us-east-1"
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.vpc.aws_route_table_association.private[1] will be created
+  + resource "aws_route_table_association" "private" {
+      + id             = (known after apply)
+      + region         = "us-east-1"
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.vpc.aws_route_table_association.public[0] will be created
+  + resource "aws_route_table_association" "public" {
+      + id             = (known after apply)
+      + region         = "us-east-1"
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.vpc.aws_route_table_association.public[1] will be created
+  + resource "aws_route_table_association" "public" {
+      + id             = (known after apply)
+      + region         = "us-east-1"
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.vpc.aws_subnet.private[0] will be created
+  + resource "aws_subnet" "private" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.0.0/20"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block                                = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + region                                         = "us-east-1"
+      + tags                                           = {
+          + "Environment"                     = "dev"
+          + "ManagedBy"                       = "terraform"
+          + "Name"                            = "rajin-eks-cluster-vpc-private-us-east-1a"
+          + "Owner"                           = "rajin"
+          + "Project"                         = "eks-terraform"
+          + "karpenter.sh/discovery"          = "rajin-eks-cluster"
+          + "kubernetes.io/role/internal-elb" = "1"
+        }
+      + tags_all                                       = {
+          + "Environment"                     = "dev"
+          + "ManagedBy"                       = "terraform"
+          + "Name"                            = "rajin-eks-cluster-vpc-private-us-east-1a"
+          + "Owner"                           = "rajin"
+          + "Project"                         = "eks-terraform"
+          + "karpenter.sh/discovery"          = "rajin-eks-cluster"
+          + "kubernetes.io/role/internal-elb" = "1"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # module.vpc.aws_subnet.private[1] will be created
+  + resource "aws_subnet" "private" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1b"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.16.0/20"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block                                = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + region                                         = "us-east-1"
+      + tags                                           = {
+          + "Environment"                     = "dev"
+          + "ManagedBy"                       = "terraform"
+          + "Name"                            = "rajin-eks-cluster-vpc-private-us-east-1b"
+          + "Owner"                           = "rajin"
+          + "Project"                         = "eks-terraform"
+          + "karpenter.sh/discovery"          = "rajin-eks-cluster"
+          + "kubernetes.io/role/internal-elb" = "1"
+        }
+      + tags_all                                       = {
+          + "Environment"                     = "dev"
+          + "ManagedBy"                       = "terraform"
+          + "Name"                            = "rajin-eks-cluster-vpc-private-us-east-1b"
+          + "Owner"                           = "rajin"
+          + "Project"                         = "eks-terraform"
+          + "karpenter.sh/discovery"          = "rajin-eks-cluster"
+          + "kubernetes.io/role/internal-elb" = "1"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # module.vpc.aws_subnet.public[0] will be created
+  + resource "aws_subnet" "public" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.48.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block                                = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + region                                         = "us-east-1"
+      + tags                                           = {
+          + "Environment"            = "dev"
+          + "ManagedBy"              = "terraform"
+          + "Name"                   = "rajin-eks-cluster-vpc-public-us-east-1a"
+          + "Owner"                  = "rajin"
+          + "Project"                = "eks-terraform"
+          + "kubernetes.io/role/elb" = "1"
+        }
+      + tags_all                                       = {
+          + "Environment"            = "dev"
+          + "ManagedBy"              = "terraform"
+          + "Name"                   = "rajin-eks-cluster-vpc-public-us-east-1a"
+          + "Owner"                  = "rajin"
+          + "Project"                = "eks-terraform"
+          + "kubernetes.io/role/elb" = "1"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # module.vpc.aws_subnet.public[1] will be created
+  + resource "aws_subnet" "public" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1b"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.49.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block                                = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + region                                         = "us-east-1"
+      + tags                                           = {
+          + "Environment"            = "dev"
+          + "ManagedBy"              = "terraform"
+          + "Name"                   = "rajin-eks-cluster-vpc-public-us-east-1b"
+          + "Owner"                  = "rajin"
+          + "Project"                = "eks-terraform"
+          + "kubernetes.io/role/elb" = "1"
+        }
+      + tags_all                                       = {
+          + "Environment"            = "dev"
+          + "ManagedBy"              = "terraform"
+          + "Name"                   = "rajin-eks-cluster-vpc-public-us-east-1b"
+          + "Owner"                  = "rajin"
+          + "Project"                = "eks-terraform"
+          + "kubernetes.io/role/elb" = "1"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # module.vpc.aws_vpc.this[0] will be created
+  + resource "aws_vpc" "this" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.0.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = true
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + region                               = "us-east-1"
+      + tags                                 = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all                             = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "rajin-eks-cluster-vpc"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+    }
+
+  # module.eks.module.eks_managed_node_group["initial"].aws_eks_node_group.this[0] will be created
+  + resource "aws_eks_node_group" "this" {
+      + ami_type               = "AL2023_x86_64_STANDARD"
+      + arn                    = (known after apply)
+      + capacity_type          = "ON_DEMAND"
+      + cluster_name           = (known after apply)
+      + disk_size              = (known after apply)
+      + id                     = (known after apply)
+      + instance_types         = [
+          + "t3.medium",
+        ]
+      + labels                 = {
+          + "karpenter.sh/controller" = "true"
+        }
+      + node_group_name        = (known after apply)
+      + node_group_name_prefix = "initial-"
+      + node_role_arn          = (known after apply)
+      + region                 = "us-east-1"
+      + release_version        = "1.34.7-20260505"
+      + resources              = (known after apply)
+      + status                 = (known after apply)
+      + subnet_ids             = (known after apply)
+      + tags                   = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "initial"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all               = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Name"        = "initial"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + version                = "1.34"
+
+      + launch_template {
+          + id      = (known after apply)
+          + name    = (known after apply)
+          + version = (known after apply)
+        }
+
+      + node_repair_config (known after apply)
+
+      + scaling_config {
+          + desired_size = 1
+          + max_size     = 2
+          + min_size     = 1
+        }
+
+      + taint {
+          + effect = "NO_SCHEDULE"
+          + key    = "CriticalAddonsOnly"
+          + value  = "true"
+        }
+
+      + update_config {
+          + max_unavailable_percentage = 33
+        }
+    }
+
+  # module.eks.module.eks_managed_node_group["initial"].aws_iam_role.this[0] will be created
+  + resource "aws_iam_role" "this" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "ec2.amazonaws.com"
+                        }
+                      + Sid       = "EKSNodeAssumeRole"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + description           = "EKS managed node group IAM role"
+      + force_detach_policies = true
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = (known after apply)
+      + name_prefix           = "initial-eks-node-group-"
+      + path                  = "/"
+      + tags                  = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all              = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.eks.module.eks_managed_node_group["initial"].aws_iam_role_policy_attachment.this["AmazonEC2ContainerRegistryReadOnly"] will be created
+  + resource "aws_iam_role_policy_attachment" "this" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+      + role       = (known after apply)
+    }
+
+  # module.eks.module.eks_managed_node_group["initial"].aws_iam_role_policy_attachment.this["AmazonEKSWorkerNodePolicy"] will be created
+  + resource "aws_iam_role_policy_attachment" "this" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+      + role       = (known after apply)
+    }
+
+  # module.eks.module.eks_managed_node_group["initial"].aws_iam_role_policy_attachment.this["AmazonEKS_CNI_Policy"] will be created
+  + resource "aws_iam_role_policy_attachment" "this" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+      + role       = (known after apply)
+    }
+
+  # module.eks.module.eks_managed_node_group["initial"].aws_launch_template.this[0] will be created
+  + resource "aws_launch_template" "this" {
+      + arn                    = (known after apply)
+      + default_version        = (known after apply)
+      + description            = "Custom launch template for initial EKS managed node group"
+      + id                     = (known after apply)
+      + latest_version         = (known after apply)
+      + name                   = (known after apply)
+      + name_prefix            = "initial-"
+      + region                 = "us-east-1"
+      + tags                   = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all               = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + update_default_version = true
+      + vpc_security_group_ids = (known after apply)
+        # (2 unchanged attributes hidden)
+
+      + metadata_options {
+          + http_endpoint               = "enabled"
+          + http_protocol_ipv6          = (known after apply)
+          + http_put_response_hop_limit = 1
+          + http_tokens                 = "required"
+          + instance_metadata_tags      = (known after apply)
+        }
+
+      + tag_specifications {
+          + resource_type = "instance"
+          + tags          = {
+              + "Environment" = "dev"
+              + "ManagedBy"   = "terraform"
+              + "Name"        = "initial"
+              + "Owner"       = "rajin"
+              + "Project"     = "eks-terraform"
+            }
+        }
+      + tag_specifications {
+          + resource_type = "network-interface"
+          + tags          = {
+              + "Environment" = "dev"
+              + "ManagedBy"   = "terraform"
+              + "Name"        = "initial"
+              + "Owner"       = "rajin"
+              + "Project"     = "eks-terraform"
+            }
+        }
+      + tag_specifications {
+          + resource_type = "volume"
+          + tags          = {
+              + "Environment" = "dev"
+              + "ManagedBy"   = "terraform"
+              + "Name"        = "initial"
+              + "Owner"       = "rajin"
+              + "Project"     = "eks-terraform"
+            }
+        }
+    }
+
+  # module.eks.module.kms.data.aws_iam_policy_document.this[0] will be read during apply
+  # (config refers to values not yet known)
+ <= data "aws_iam_policy_document" "this" {
+      + id                        = (known after apply)
+      + json                      = (known after apply)
+      + minified_json             = (known after apply)
+      + override_policy_documents = []
+      + source_policy_documents   = []
+
+      + statement {
+          + actions   = [
+              + "kms:*",
+            ]
+          + resources = [
+              + "*",
+            ]
+          + sid       = "Default"
+
+          + principals {
+              + identifiers = [
+                  + "arn:aws:iam::733533334364:root",
+                ]
+              + type        = "AWS"
+            }
+        }
+      + statement {
+          + actions   = [
+              + "kms:CancelKeyDeletion",
+              + "kms:Create*",
+              + "kms:Delete*",
+              + "kms:Describe*",
+              + "kms:Disable*",
+              + "kms:Enable*",
+              + "kms:Get*",
+              + "kms:ImportKeyMaterial",
+              + "kms:List*",
+              + "kms:Put*",
+              + "kms:ReplicateKey",
+              + "kms:Revoke*",
+              + "kms:ScheduleKeyDeletion",
+              + "kms:TagResource",
+              + "kms:UntagResource",
+              + "kms:Update*",
+            ]
+          + resources = [
+              + "*",
+            ]
+          + sid       = "KeyAdministration"
+
+          + principals {
+              + identifiers = [
+                  + "arn:aws:iam::733533334364:root",
+                ]
+              + type        = "AWS"
+            }
+        }
+      + statement {
+          + actions   = [
+              + "kms:Decrypt",
+              + "kms:DescribeKey",
+              + "kms:Encrypt",
+              + "kms:GenerateDataKey*",
+              + "kms:ReEncrypt*",
+            ]
+          + resources = [
+              + "*",
+            ]
+          + sid       = "KeyUsage"
+
+          + principals {
+              + identifiers = [
+                  + (known after apply),
+                ]
+              + type        = "AWS"
+            }
+        }
+    }
+
+  # module.eks.module.kms.aws_kms_alias.this["cluster"] will be created
+  + resource "aws_kms_alias" "this" {
+      + arn            = (known after apply)
+      + id             = (known after apply)
+      + name           = "alias/eks/rajin-eks-cluster"
+      + name_prefix    = (known after apply)
+      + region         = "us-east-1"
+      + target_key_arn = (known after apply)
+      + target_key_id  = (known after apply)
+    }
+
+  # module.eks.module.kms.aws_kms_key.this[0] will be created
+  + resource "aws_kms_key" "this" {
+      + arn                                = (known after apply)
+      + bypass_policy_lockout_safety_check = false
+      + customer_master_key_spec           = "SYMMETRIC_DEFAULT"
+      + description                        = "rajin-eks-cluster cluster encryption key"
+      + enable_key_rotation                = true
+      + id                                 = (known after apply)
+      + is_enabled                         = true
+      + key_id                             = (known after apply)
+      + key_usage                          = "ENCRYPT_DECRYPT"
+      + multi_region                       = false
+      + policy                             = (known after apply)
+      + region                             = "us-east-1"
+      + rotation_period_in_days            = (known after apply)
+      + tags                               = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+      + tags_all                           = {
+          + "Environment" = "dev"
+          + "ManagedBy"   = "terraform"
+          + "Owner"       = "rajin"
+          + "Project"     = "eks-terraform"
+        }
+    }
+
+  # module.eks.module.eks_managed_node_group["initial"].module.user_data.null_resource.validate_cluster_service_cidr will be created
+  + resource "null_resource" "validate_cluster_service_cidr" {
+      + id = (known after apply)
+    }
+
+Plan: 84 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + cluster_endpoint  = (known after apply)
+  + cluster_name      = "rajin-eks-cluster"
+  + cluster_version   = "1.34"
+  + configure_kubectl = "aws eks update-kubeconfig --name rajin-eks-cluster --region us-east-1"
+  + private_subnets   = [
+      + (known after apply),
+      + (known after apply),
+    ]
+  + public_subnets    = [
+      + (known after apply),
+      + (known after apply),
+    ]
+  + vpc_id            = (known after apply)

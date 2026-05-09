@@ -204,3 +204,88 @@ resource "kubectl_manifest" "karpenter_nodepool" {
 
   depends_on = [kubectl_manifest.karpenter_ec2nodeclass]
 }
+
+# ─────────────────────────────────────────
+# AWS Load Balancer Controller v2.11.0
+# Helm chart version: 1.11.0
+# ─────────────────────────────────────────
+
+# Create IAM policy from downloaded JSON
+resource "aws_iam_policy" "lbc" {
+  name        = "${var.cluster_name}-lbc-policy"
+  description = "IAM policy for AWS Load Balancer Controller"
+  policy      = file("${path.module}/helm-values/lbc-iam-policy.json")
+}
+
+# IAM role using Pod Identity (EKS Pod Identity — modern approach)
+resource "aws_iam_role" "lbc" {
+  name = "${var.cluster_name}-lbc-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "pods.eks.amazonaws.com"
+      }
+      Action = [
+        "sts:AssumeRole",
+        "sts:TagSession"
+      ]
+    }]
+  })
+
+  tags = local.tags
+}
+
+resource "aws_iam_role_policy_attachment" "lbc" {
+  policy_arn = aws_iam_policy.lbc.arn
+  role       = aws_iam_role.lbc.name
+}
+
+# Pod Identity Association — links the IAM role to the LBC service account
+resource "aws_eks_pod_identity_association" "lbc" {
+  cluster_name    = module.eks.cluster_name
+  namespace       = "kube-system"
+  service_account = "aws-load-balancer-controller"
+  role_arn        = aws_iam_role.lbc.arn
+}
+
+# Install LBC via Helm
+resource "helm_release" "lbc" {
+  name       = "aws-load-balancer-controller"
+  repository = "https://aws.github.io/eks-charts"
+  chart      = "aws-load-balancer-controller"
+  namespace  = "kube-system"
+  version    = "1.11.0"
+
+  set {
+    name  = "clusterName"
+    value = module.eks.cluster_name
+  }
+
+  set {
+    name  = "serviceAccount.create"
+    value = "true"
+  }
+
+  set {
+    name  = "serviceAccount.name"
+    value = "aws-load-balancer-controller"
+  }
+
+  set {
+    name  = "region"
+    value = var.aws_region
+  }
+
+  set {
+    name  = "vpcId"
+    value = module.vpc.vpc_id
+  }
+
+  depends_on = [
+    module.eks,
+    aws_eks_pod_identity_association.lbc
+  ]
+}
