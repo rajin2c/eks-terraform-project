@@ -289,3 +289,71 @@ resource "helm_release" "lbc" {
     aws_eks_pod_identity_association.lbc
   ]
 }
+
+# ─────────────────────────────────────────
+# cert-manager v1.17.7
+# Must be installed before Istio
+# ─────────────────────────────────────────
+resource "helm_release" "cert_manager" {
+  name             = "cert-manager"
+  repository       = "https://charts.jetstack.io"
+  chart            = "cert-manager"
+  namespace        = "cert-manager"
+  version          = "1.17.7"
+  create_namespace = true
+  wait             = true
+
+  set {
+    name  = "crds.enabled"
+    value = "true"
+  }
+
+  depends_on = [module.eks]
+}
+
+# ─────────────────────────────────────────
+# Istio 1.28.0
+# ─────────────────────────────────────────
+
+# Istio base — installs CRDs and cluster-wide resources
+resource "helm_release" "istio_base" {
+  name             = "istio-base"
+  repository       = "https://istio-release.storage.googleapis.com/charts"
+  chart            = "base"
+  namespace        = "istio-system"
+  version          = "1.28.0"
+  create_namespace = true
+  wait             = true
+
+  set {
+    name  = "defaultRevision"
+    value = "default"
+  }
+
+  depends_on = [
+    module.eks,
+    helm_release.cert_manager
+  ]
+}
+
+# Istiod — Istio control plane
+resource "helm_release" "istiod" {
+  name       = "istiod"
+  repository = "https://istio-release.storage.googleapis.com/charts"
+  chart      = "istiod"
+  namespace  = "istio-system"
+  version    = "1.28.0"
+  wait       = true
+
+  set {
+    name  = "pilot.resources.requests.cpu"
+    value = "100m"
+  }
+
+  set {
+    name  = "pilot.resources.requests.memory"
+    value = "128Mi"
+  }
+
+  depends_on = [helm_release.istio_base]
+}
