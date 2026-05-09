@@ -59,3 +59,77 @@ module "vpc" {
 
   tags = local.tags
 }
+
+# ─────────────────────────────────────────
+# EKS Cluster — terraform-aws-modules/eks v21.19.0
+# ─────────────────────────────────────────
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "21.19.0"
+
+  name               = var.cluster_name
+  kubernetes_version = var.cluster_version
+
+  # Networking
+  vpc_id                   = module.vpc.vpc_id
+  subnet_ids               = module.vpc.private_subnets
+  control_plane_subnet_ids = module.vpc.private_subnets
+
+  # Public endpoint — needed for kubectl access from WSL2
+  endpoint_public_access = true
+
+  # Gives your Terraform IAM user admin access to the cluster
+  # Required to deploy resources into the cluster via Terraform
+  enable_cluster_creator_admin_permissions = true
+
+  # EKS Managed Add-ons
+  addons = {
+    coredns = {
+      most_recent = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+    vpc-cni = {
+      most_recent    = true
+      before_compute = true
+    }
+    eks-pod-identity-agent = {
+      most_recent    = true
+      before_compute = true
+    }
+  }
+
+  # Initial node group — runs Karpenter controller
+  # Karpenter itself runs on these nodes, then manages all other nodes
+  eks_managed_node_groups = {
+    initial = {
+      ami_type       = "AL2023_x86_64_STANDARD"
+      instance_types = ["t3.medium"]
+
+      min_size     = 1
+      max_size     = 2
+      desired_size = 1
+
+      # Prevents Karpenter from managing its own controller nodes
+      labels = {
+        "karpenter.sh/controller" = "true"
+      }
+
+      taints = {
+        addons = {
+          key    = "CriticalAddonsOnly"
+          value  = "true"
+          effect = "NO_SCHEDULE"
+        }
+      }
+    }
+  }
+
+  # Tag node security group for Karpenter discovery
+  node_security_group_tags = {
+    "karpenter.sh/discovery" = var.cluster_name
+  }
+
+  tags = local.tags
+}

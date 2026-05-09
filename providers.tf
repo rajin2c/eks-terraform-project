@@ -40,3 +40,54 @@ provider "aws" {
 
 # NOTE: Helm, Kubernetes, and kubectl providers reference the EKS cluster
 # They are configured in main.tf after the EKS module is defined
+
+# Helm provider — connects to EKS cluster
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args = [
+        "eks", "get-token",
+        "--cluster-name", module.eks.cluster_name,
+        "--region", var.aws_region
+      ]
+    }
+  }
+}
+
+# Kubernetes provider — connects to EKS cluster
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args = [
+      "eks", "get-token",
+      "--cluster-name", module.eks.cluster_name,
+      "--region", var.aws_region
+    ]
+  }
+}
+
+# kubectl provider — used for applying raw YAML manifests
+provider "kubectl" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  load_config_file       = false
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args = [
+      "eks", "get-token",
+      "--cluster-name", module.eks.cluster_name,
+      "--region", var.aws_region
+    ]
+  }
+}
