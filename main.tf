@@ -103,25 +103,17 @@ module "eks" {
   # Initial node group — runs Karpenter controller
   # Karpenter itself runs on these nodes, then manages all other nodes
   eks_managed_node_groups = {
-    initial = {
+    system = {
       ami_type       = "AL2023_x86_64_STANDARD"
       instance_types = ["t3.medium"]
 
       min_size     = 1
-      max_size     = 2
-      desired_size = 1
+      max_size     = 3
+      desired_size = 2
 
-      # Prevents Karpenter from managing its own controller nodes
+      # Identifies the bootstrap node that runs cluster add-ons and Karpenter
       labels = {
-        "karpenter.sh/controller" = "true"
-      }
-
-      taints = {
-        addons = {
-          key    = "CriticalAddonsOnly"
-          value  = "true"
-          effect = "NO_SCHEDULE"
-        }
+        "node-type" = "system"
       }
     }
   }
@@ -145,6 +137,7 @@ module "karpenter" {
   cluster_name = module.eks.cluster_name
 
   # Pod Identity association for the Karpenter controller
+  namespace                       = "karpenter-system"
   create_pod_identity_association = true
 
   # IAM role for nodes that Karpenter provisions
@@ -154,14 +147,19 @@ module "karpenter" {
   tags = local.tags
 }
 
+# Required once per AWS account before Karpenter can launch Spot capacity.
+resource "aws_iam_service_linked_role" "ec2_spot" {
+  aws_service_name = "spot.amazonaws.com"
+}
+
 # Karpenter Helm chart — installs the controller
 resource "helm_release" "karpenter" {
   name             = "karpenter"
-  namespace        = "kube-system"
+  namespace        = "karpenter-system"
   repository       = "oci://public.ecr.aws/karpenter"
   chart            = "karpenter"
   version          = "1.9.0"
-  create_namespace = false
+  create_namespace = true
   wait             = true
   wait_for_jobs    = true
 
@@ -173,11 +171,13 @@ resource "helm_release" "karpenter" {
     controller:
       resources:
         requests:
-          cpu: 1
-          memory: 1Gi
+          cpu: 500m
+          memory: 512Mi
         limits:
-          cpu: 1
-          memory: 1Gi
+          cpu: 500m
+          memory: 512Mi
+      nodeSelector:
+        node-type: system
     EOT
   ]
 
@@ -202,7 +202,10 @@ resource "kubectl_manifest" "karpenter_nodepool" {
     cluster_name = var.cluster_name
   })
 
-  depends_on = [kubectl_manifest.karpenter_ec2nodeclass]
+  depends_on = [
+    aws_iam_service_linked_role.ec2_spot,
+    kubectl_manifest.karpenter_ec2nodeclass
+  ]
 }
 
 # ─────────────────────────────────────────
@@ -258,6 +261,7 @@ resource "helm_release" "lbc" {
   chart      = "aws-load-balancer-controller"
   namespace  = "kube-system"
   version    = "1.11.0"
+  timeout    = 600
 
   set {
     name  = "clusterName"
@@ -284,6 +288,11 @@ resource "helm_release" "lbc" {
     value = module.vpc.vpc_id
   }
 
+  set {
+    name  = "nodeSelector.node-type"
+    value = "system"
+  }
+
   depends_on = [
     module.eks,
     aws_eks_pod_identity_association.lbc
@@ -291,7 +300,7 @@ resource "helm_release" "lbc" {
 }
 
 # ─────────────────────────────────────────
-# cert-manager v1.17.7
+# cert-manager v1.17.4
 # Must be installed before Istio
 # ─────────────────────────────────────────
 resource "helm_release" "cert_manager" {
@@ -299,13 +308,29 @@ resource "helm_release" "cert_manager" {
   repository       = "https://charts.jetstack.io"
   chart            = "cert-manager"
   namespace        = "cert-manager"
-  version          = "1.17.7"
+  version          = "1.17.4"
   create_namespace = true
   wait             = true
+  timeout          = 600
 
   set {
     name  = "crds.enabled"
     value = "true"
+  }
+
+  set {
+    name  = "nodeSelector.node-type"
+    value = "system"
+  }
+
+  set {
+    name  = "webhook.nodeSelector.node-type"
+    value = "system"
+  }
+
+  set {
+    name  = "cainjector.nodeSelector.node-type"
+    value = "system"
   }
 
   depends_on = [module.eks]
@@ -324,6 +349,7 @@ resource "helm_release" "istio_base" {
   version          = "1.28.0"
   create_namespace = true
   wait             = true
+  timeout          = 600
 
   set {
     name  = "defaultRevision"
@@ -344,6 +370,7 @@ resource "helm_release" "istiod" {
   namespace  = "istio-system"
   version    = "1.28.0"
   wait       = true
+  timeout    = 600
 
   set {
     name  = "pilot.resources.requests.cpu"
@@ -355,5 +382,59 @@ resource "helm_release" "istiod" {
     value = "128Mi"
   }
 
+  set {
+    name  = "pilot.nodeSelector.node-type"
+    value = "system"
+  }
+
   depends_on = [helm_release.istio_base]
+}
+
+# ─────────────────────────────────────────
+# kube-prometheus-stack 84.5.0
+# Includes: Prometheus, Grafana, Alertmanager,
+#           node-exporter, kube-state-metrics
+# ─────────────────────────────────────────
+resource "helm_release" "kube_prometheus_stack" {
+  name             = "kube-prometheus-stack"
+  repository       = "https://prometheus-community.github.io/helm-charts"
+  chart            = "kube-prometheus-stack"
+  namespace        = "prometheus-system"
+  version          = "84.5.0"
+  create_namespace = true
+  wait             = true
+  timeout          = 600
+
+  values = [
+    <<-EOT
+    prometheus:
+      prometheusSpec:
+        retention: 24h
+        nodeSelector:
+          node-type: workload
+        resources:
+          requests:
+            cpu: 200m
+            memory: 200Mi
+    prometheusOperator:
+      nodeSelector:
+        node-type: workload
+      admissionWebhooks:
+        patch:
+          nodeSelector:
+            node-type: workload
+    grafana:
+      enabled: true
+      adminPassword: "rajin@grafana123"
+      nodeSelector:
+        node-type: workload
+    kube-state-metrics:
+      nodeSelector:
+        node-type: workload
+    alertmanager:
+      enabled: false
+    EOT
+  ]
+
+  depends_on = [module.eks]
 }

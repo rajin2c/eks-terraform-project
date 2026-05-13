@@ -8,6 +8,10 @@ spec:
     - alias: al2023@latest
   # IAM role for Karpenter-provisioned nodes
   role: "${cluster_name}-karpenter-node"
+  userData: |
+    #!/bin/bash
+    /etc/eks/bootstrap.sh ${cluster_name} \
+      --kubelet-extra-args '--node-labels=node-type=workload,provisioner=karpenter'
   # Discover subnets tagged with karpenter.sh/discovery
   subnetSelectorTerms:
     - tags:
